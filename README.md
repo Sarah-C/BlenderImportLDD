@@ -16,9 +16,12 @@ Changes:
 
 Where to find the new option:            
 ![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/dbd3ce95-15fa-4206-a2a9-24c5fc822d0a)                   
-.                 
+                 
 Images still need a mixShader to enable correct alpha blending, as shown below:            
 ![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/c1283ae4-eb70-4c06-8c5d-97988f737f0d)               
                
 Example scene:            
-![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/aa122c7d-c3cf-4d47-b6fd-c30708ac9b23)               
+![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/aa122c7d-c3cf-4d47-b6fd-c30708ac9b23)                
+                   
+Example backlit scene:                    
+![G__Plugins_Blender_BlenderImportLDD_sceneBacklit](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/2df3dc20-0772-4b7f-a3f1-e19c7c9f89fe)
