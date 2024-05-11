@@ -6,10 +6,13 @@ For Blender 3.6
 
 Changes:          
 --------
-I've tweaked the old importer to combine the same materials, and export the decorations properly.              
-Materials can be split if needed in Blender, but means all of the same material can be tweaked at once - much faster! 
-Materials are also now named rather than just numbered.        
-Bricks have their full name too.          
+1: I've tweaked the old importer to combine the same materials, and export the decorations properly - it had started to error.              
+
+2: Materials can be split if needed in Blender, but means all of the same material can be tweaked at once - much faster!          
+
+3: Materials are also now named rather than just numbered.         
+
+4: Bricks have their full name too.            
 
 ![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/dbd3ce95-15fa-4206-a2a9-24c5fc822d0a)
 
