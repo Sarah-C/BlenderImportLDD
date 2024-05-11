@@ -4,6 +4,15 @@
 Blender Lego Digital Designer importer.                    
 For Blender 3.6
 
+**How to use:**          
+1: Download the BlenderImportLDD.py file to your desktop.           
+2: In Blender, follow the process of importing a new plugin:            
+... Go into the Blender preferences, either by clicking on Main Header>Edit>Preferences or by changing an editor type to 'preferences'.            
+... Go to the 'Add-ons' category, and click on the 'Install...' button to install a new addon.               
+... Choose the BlenderImportLDD.py file on your desktop, and click "Install Addon" button.            
+... Click the empty box that appears along with "Import-Export: Import LEGO Digital Designer, this enables the plugin.               
+... The option is now in the Import menu, see the image below.                        
+
 Changes:          
 --------
 1: I've tweaked the old importer to combine the same materials, and export the decorations properly - it had started to error.              
