@@ -23,5 +23,7 @@ Images still need a mixShader to enable correct alpha blending, as shown below:
 Example scene:            
 ![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/aa122c7d-c3cf-4d47-b6fd-c30708ac9b23)                
                    
-Example backlit scene:                    
+Example backlit scene:           
+Transparent : 0.5       
+Internal Transparent Roughness : 0.4                
 ![G__Plugins_Blender_BlenderImportLDD_sceneBacklit](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/2df3dc20-0772-4b7f-a3f1-e19c7c9f89fe)
