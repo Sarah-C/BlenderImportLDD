@@ -1417,7 +1417,12 @@ def convertldd_data(context, filepath, lddLIFPath, useLogoStuds, useLDDCamera):
     
     else:
         print("no LDD database found please install LEGO-Digital-Designer")
-
+    
+    # Scale the world
+    scale = 0.025
+    # change scale and location
+    [setattr(obj, 'scale', obj.scale*scale) for obj in bpy.data.objects if obj.type != 'EMPTY']
+    [setattr(obj, 'location', obj.location*scale) for obj in bpy.data.objects]
     return {'FINISHED'}
 
 
