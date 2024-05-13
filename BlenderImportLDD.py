@@ -259,7 +259,7 @@ class Scene:
             return
 
         xml = minidom.parseString(data)
-        self.Name = xml.firstChild.getAttribute('name')
+        self.Name = xml.firstChild.getAttribute('name') + '_' # Fix blank scene name by adding underscore.
                 
         for node in xml.firstChild.childNodes: 
             if node.nodeName == 'Meta':
