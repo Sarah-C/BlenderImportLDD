@@ -22,7 +22,9 @@ Changes:
 
 3: Materials are also now named rather than just numbered.         
 
-4: Bricks have their full name too.            
+4: Bricks have their full name too.    
+
+5: Scene names have an added underscore, so empty names no longer crash the plugin.
 
 Where to find the new option:            
 ![image](https://github.com/Sarah-C/BlenderImportLDD/assets/1586332/dbd3ce95-15fa-4206-a2a9-24c5fc822d0a)                   
