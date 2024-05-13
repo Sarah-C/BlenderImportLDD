@@ -1421,8 +1421,8 @@ def convertldd_data(context, filepath, lddLIFPath, useLogoStuds, useLDDCamera):
     # Scale the world
     scale = 0.025
     # change scale and location
-    [setattr(obj, 'scale', obj.scale*scale) for obj in bpy.data.objects if obj.type != 'EMPTY']
-    [setattr(obj, 'location', obj.location*scale) for obj in bpy.data.objects]
+    [setattr(obj, 'scale', obj.scale*scale) for obj in bpy.data.objects if ((obj.type != 'EMPTY') and (obj.type != 'CAMERA'))]
+    [setattr(obj, 'location', obj.location*scale) for obj in bpy.data.objects if obj.type != 'CAMERA']
     return {'FINISHED'}
 
 
