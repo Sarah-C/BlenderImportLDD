@@ -1500,4 +1500,4 @@ if __name__ == "__main__":
     register()
 
     # test call
-    bpy.ops.import_scene.importldd('INVOKE_DEFAULT')
+    # bpy.ops.import_scene.importldd('INVOKE_DEFAULT')
