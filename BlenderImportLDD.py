@@ -52,6 +52,7 @@ from xml.dom import minidom
 import uuid
 import random
 import time
+import traceback
 
 if sys.version_info < (3, 0):
     reload(sys)
@@ -800,30 +801,46 @@ class LIFFile:
         self.handle.seek(self.offset, 0)
         return self.handle.read(self.size)
 
-class DBFolderReader:
-    def __init__(self, folder):
+
+class AbstractReader:
+    def fileexist(self, filename, warning=False):
+        if filename in self.filelist:
+            return True
+        else:
+            print(f"File does not exist: {filename}")
+            if self.operator is not None:
+                self.operator.report({"WARNING" if warning else "ERROR"}, f"File does not exist: {filename}")
+            return False
+
+
+class DBFolderReader(AbstractReader):
+    def __init__(self, folder, operator):
         self.filelist = {}
         self.initok = False
         self.location = folder
         self.dbinfo = None
+        self.operator = operator
+        self.localized_strings_found = False
         
         try:
             os.path.isdir(self.location)
         except Exception as e:
             self.initok = False
             print("db folder read FAIL")
+            print(traceback.format_exc())
+            if operator is not None:
+                operator.report("{ERROR}", f"db folder read fail: {e}")
             return
         else:
             self.parse()
-            if self.fileexist(os.path.join(self.location,'Materials.xml')) and self.fileexist(os.path.join(self.location, 'info.xml')) and self.fileexist(os.path.normpath(os.path.join(self.location, MATERIALNAMESPATH, 'EN/localizedStrings.loc'))):
+            if self.fileexist(os.path.join(self.location,'Materials.xml')) and self.fileexist(os.path.join(self.location, 'info.xml')):
+                if self.fileexist(os.path.normpath(os.path.join(self.location, MATERIALNAMESPATH, 'EN/localizedStrings.loc')), warning=True):
+                    self.localized_strings_found = True
                 self.dbinfo = DBinfo(data=self.filelist[os.path.join(self.location,'info.xml')].read())
                 print("DB folder OK.")
                 self.initok = True
             else:
                 print("DB folder ERROR")
-                
-    def fileexist(self, filename):
-        return filename in self.filelist
 
     def parse(self):
         for path, subdirs, files in os.walk(self.location):
@@ -831,13 +848,15 @@ class DBFolderReader:
                 entryName = os.path.join(path, name)
                 self.filelist[entryName] = DBFolderFile(name=entryName, handle=entryName)
     
-class LIFReader:
-    def __init__(self, file):
+class LIFReader(AbstractReader):
+    def __init__(self, file, operator):
         self.packedFilesOffset = 84
         self.filelist = {}
         self.initok = False
         self.location = file
         self.dbinfo = None
+        self.operator = operator
+        self.localized_strings_found = False
 
         try:
             self.filehandle = open(self.location, "rb")
@@ -845,11 +864,16 @@ class LIFReader:
         except Exception as e:
             self.initok = False
             print("Database FAIL")
+            print(traceback.format_exc())
+            if operator is not None:
+                operator.report({"ERROR"}, f"Database fail: {e}\nTry closing Lego Digital Designer before import")
             return
         else:
             if self.filehandle.read(4).decode() == "LIFF":
                 self.parse(prefix='', offset=self.readInt(offset=72) + 64)
-                if self.fileexist(os.path.normpath('/Materials.xml')) and self.fileexist(os.path.normpath('/info.xml')) and self.fileexist(os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')):
+                if self.fileexist(os.path.normpath('/Materials.xml')) and self.fileexist(os.path.normpath('/info.xml')):
+                    if self.fileexist(os.path.normpath(os.path.join(self.location, MATERIALNAMESPATH, 'EN/localizedStrings.loc')), warning=True):
+                        self.localized_strings_found = True
                     self.dbinfo = DBinfo(data=self.filelist[os.path.normpath('/info.xml')].read())
                     print("Database OK.")
                     self.initok = True
@@ -857,10 +881,9 @@ class LIFReader:
                     print("Database ERROR")
             else:
                 print("Database FAIL")
+                if operator is not None:
+                    operator.report({"ERROR"}, f"Did not read LIFF in file {self.location}")
                 self.initok = False
-
-    def fileexist(self,filename):
-        return filename in self.filelist
 
     def parse(self, prefix='', offset=0):
         if prefix == '':
@@ -920,23 +943,27 @@ class LIFReader:
             return int.from_bytes(self.filehandle.read(2), byteorder='big')
 
 class Converter:
-    def LoadDBFolder(self, dbfolderlocation):
-        self.database = DBFolderReader(folder=dbfolderlocation)
+    def LoadDBFolder(self, dbfolderlocation, operator):
+        self.database = DBFolderReader(folder=dbfolderlocation, operator=operator)
 
-        if self.database.initok and self.database.fileexist(os.path.join(dbfolderlocation,'Materials.xml')) and self.database.fileexist(os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')):
-            self.allMaterials = Materials(data=self.database.filelist[os.path.normpath(os.path.join(dbfolderlocation,'Materials.xml'))].read());
-            self.allMaterials.setLOC(loc=LOCReader(data=self.database.filelist[os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')].read()))
+        if self.database.initok and self.database.fileexist(os.path.join(dbfolderlocation,'Materials.xml')):
+            self.allMaterials = Materials(data=self.database.filelist[os.path.normpath(os.path.join(dbfolderlocation,'Materials.xml'))].read())
+            if self.database.localized_strings_found:
+                self.allMaterials.setLOC(loc=LOCReader(data=self.database.filelist[os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')].read()))
     
-    def LoadDatabase(self,databaselocation):
-        self.database = LIFReader(file=databaselocation)
+    def LoadDatabase(self,databaselocation, operator):
+        self.database = LIFReader(file=databaselocation, operator=operator)
 
-        if self.database.initok and self.database.fileexist(os.path.normpath('/Materials.xml')) and self.database.fileexist(os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')):
-            self.allMaterials = Materials(data=self.database.filelist[os.path.normpath('/Materials.xml')].read());
-            self.allMaterials.setLOC(loc=LOCReader(data=self.database.filelist[os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')].read()))
+        if self.database.initok and self.database.fileexist(os.path.normpath('/Materials.xml')):
+            self.allMaterials = Materials(data=self.database.filelist[os.path.normpath('/Materials.xml')].read())
+            if self.database.localized_strings_found:
+                self.allMaterials.setLOC(loc=LOCReader(data=self.database.filelist[os.path.normpath(MATERIALNAMESPATH + 'EN/localizedStrings.loc')].read()))
 
     def LoadScene(self,filename):
         if self.database.initok:
             self.scene = Scene(file=filename)
+            return True
+        return False
 
     def Export(self,filename, useLogoStuds, useLDDCamera):
         invert = Matrix3D() 
@@ -1383,13 +1410,13 @@ def main():
     if os.path.isdir(FindDatabase()):
         print("Found DB folder. Will use this instead of db.lif!")
         setDBFolderVars(dbfolderlocation = FindDatabase())
-        converter.LoadDBFolder(dbfolderlocation = FindDatabase())
+        converter.LoadDBFolder(dbfolderlocation = FindDatabase(), operator=None)
         converter.LoadScene(filename=lxf_filename)
         converter.Export(filename=obj_filename)
         
     elif os.path.isfile(FindDatabase()):
         print("Found db.lif. Will use this.")
-        converter.LoadDatabase(databaselocation = FindDatabase())
+        converter.LoadDatabase(databaselocation = FindDatabase(), operator=None)
         converter.LoadScene(filename=lxf_filename)
         converter.Export(filename=obj_filename)
     else:
@@ -1399,24 +1426,29 @@ def main():
 
 
 
-def convertldd_data(context, filepath, lddLIFPath, useLogoStuds, useLDDCamera):
+def convertldd_data(context, filepath, lddLIFPath, useLogoStuds, useLDDCamera, operator):
         
     converter = Converter()
     if os.path.isdir(lddLIFPath):
-        print("Found DB folder. Will use this instead of db.lif!")
+        print(f"Found DB folder {lddLIFPath}. Will use this instead of db.lif!")
         setDBFolderVars(dbfolderlocation = lddLIFPath)
-        converter.LoadDBFolder(dbfolderlocation = lddLIFPath)
+        converter.LoadDBFolder(dbfolderlocation = lddLIFPath, operator=operator)
         
     elif os.path.isfile(lddLIFPath):
-        print("Found db.lif. Will use this.")
-        converter.LoadDatabase(databaselocation = lddLIFPath)
+        print(f"Found db.lif {lddLIFPath}. Will use this.")
+        converter.LoadDatabase(databaselocation = lddLIFPath, operator=operator)
         
     if (os.path.isdir(lddLIFPath) or os.path.isfile(lddLIFPath)):
-        converter.LoadScene(filename=filepath)
-        converter.Export(filename=filepath, useLogoStuds=useLogoStuds, useLDDCamera=useLDDCamera)  
+        if converter.LoadScene(filename=filepath):
+            converter.Export(filename=filepath, useLogoStuds=useLogoStuds, useLDDCamera=useLDDCamera)
+        else:
+            "Could not load scene, database init not ok"
     
     else:
+        print(f"No file or directory found at {lddLIFPath}")
         print("no LDD database found please install LEGO-Digital-Designer")
+        if operator is not None:
+            operator.report({"WARNING"}, "no LDD database found please install LEGO-Digital-Designer")
     
     # Scale the world
     scale = 0.025
@@ -1478,7 +1510,7 @@ class ImportLDDOps(Operator, ImportHelper):
     )
 
     def execute(self, context):
-        return convertldd_data(context, self.filepath, self.lddLIFPath, self.useLogoStuds, self.useLDDCamera)
+        return convertldd_data(context, self.filepath, self.lddLIFPath, self.useLogoStuds, self.useLDDCamera, self)
 
 
 # Only needed if you want to add into a dynamic menu
